@@ -20,84 +20,23 @@ class wheelOdometry(object):
         	self.roll = 0
 		self.pitch = 0
 		self.frame_id = 0
-		# publisher
-		#self.pubOdometry = rospy.Publisher("/odometry", Odometry, queue_size = 10)
-		#self.pubMarker = rospy.Publisher("/odom_marker", Marker, queue_size =10)
-		# subscriber
-		#self.sub_RP = rospy.Subscriber("~orientationRP", Float64MultiArray, self.cbOrientation)
-		self.sub_odom = rospy.Subscriber("/serial_node/odometry", Float64MultiArray, self.cbPose)
-		rospy.on_shutdown(self.custom_shutdown) # shutdown method
-		#self.update_timer = rospy.Timer(rospy.Duration.from_sec(1), self.update) # timer for update robot pose, update rate = 1 Hz
 
+		# publisher
+		self.vis_pub = rospy.Publisher('visualization_marker', Marker, queue_size=10, latch=True)
+
+		# subsrciber
+		self.sub_odom = rospy.Subscriber("/serial_node/odometry", Float64MultiArray, self.cbPose)
+
+		self.publish_marker()
+
+		rospy.on_shutdown(self.custom_shutdown) # shutdown method
 		rospy.loginfo("[%s] Initialized " %self.node_name)
 		self.now = rospy.get_time() # start
 
 	def custom_shutdown(self):
 		rospy.loginfo("[%s] Shutting down..." %self.node_name)
 
-	'''def update(self, event): # update robot pose method, which will execute repeatedly
-		dt = rospy.get_time() - self.now # in sec
-		self.dphi_R = float(self.encoder_pre_R - self.encoder_pos_R) / self.CPR * (2 * pi) * self.radius  # without convert to float, you will get zero since int division! in meter
-		self.dphi_L = float(self.encoder_pre_L - self.encoder_pos_L) / self.CPR * (2 * pi) * self.radius
-		linear = (self.dphi_R + self.dphi_L) / 2 / dt # linear velocity in meter per second
-		self.yaw += (self.dphi_R - self.dphi_L) / self.width
-		angular = (self.dphi_R - self.dphi_L) / self.width / dt # angular velocity in radian per second
-		self.x += cos(self.yaw - (self.dphi_R - self.dphi_L) / (2 * self.width)) * (self.dphi_R + self.dphi_L) / 2
-		self.y += sin(self.yaw - (self.dphi_R - self.dphi_L) / (2 * self.width)) * (self.dphi_R + self.dphi_L) / 2
-		self.yaw = self.yaw % (2 * pi) # normalized to [0, 2pi)
-		#print "dphi_R:", self.dphi_R," dphi_L:", self.dphi_L # uncomment to print the distance wheels traveled
-		self.encoder_pos_L = self.encoder_pre_L
-		self.encoder_pos_R = self.encoder_pre_R # encoder information refrash
-		# send tf from base_link to world
-		self.br.sendTransform((self.x, self.y, 0), # to 3d translation
-                                tf.transformations.quaternion_from_euler(self.roll, self.pitch, self.yaw), # to 3d rotation
-                                rospy.Time.now(), # timestamp
-                                "base_link", # robot frame
-                                "map") # base frame
-		print "x=", self.x," y=", self.y, " theta=" ,self.yaw  # uncomment to print the position and pose of the robot
-		quaternion = tf.transformations.quaternion_from_euler(self.roll, self.pitch, self.yaw)
-		odom = Odometry()
-		odom.header.stamp = rospy.Time.now()
-		odom.header.frame_id = "map"
-		odom.child_frame_id = "wheel_odometry"
-		# pose
-		odom.pose.pose.position.x = self.x
-		odom.pose.pose.position.y = self.y
-		odom.pose.pose.position.z = 0
-		odom.pose.pose.orientation.x = quaternion[0]
-		odom.pose.pose.orientation.y = quaternion[1]
-		odom.pose.pose.orientation.z = quaternion[2]
-		odom.pose.pose.orientation.w = quaternion[3]
-		# twist
-		odom.twist.twist.linear.x = linear * cos(self.yaw)
-		odom.twist.twist.linear.y = linear * sin(self.yaw)
-		odom.twist.twist.linear.z = 0
-		odom.twist.twist.angular.x = 0
-		odom.twist.twist.angular.y = 0
-		odom.twist.twist.angular.z = angular
-		self.pubOdometry.publish(odom)
-		
-		marker = Marker()
-		marker.header.stamp = rospy.Time.now()
-		marker.header.frame_id = "map"
-		marker.type = Points
-		marker.action = ADD
-		marker.pose.position.x = 0
-		marker.pose.position.y = 0
-		marker.pose.position.z = 0
-		marker.pose.orientation.x = 0
-		marker.pose.orientation.y = 0
-		marker.pose.orientation.z = 0
-		marker.pose.orientation.w = 1 
-		marker.scale.x = 0.1
-		marker.scale.y = 0.1
-		marker.scale.z = 0.1
-		rgba = [0.6, 0.6, 0.6, 1]
-		marker.color.
-		self.now = rospy.get_time()'''
-	'''def cbOrientation(self, msg):
-		self.roll = msg.data[0]
-		self.pitch = msg.data[1]'''
+
 	def cbPose(self, msg):
 		self.x = msg.data[0]
 		self.y = msg.data[1]
@@ -107,26 +46,48 @@ class wheelOdometry(object):
                                       rospy.Time.now(), # timestamp
                                       "base_link", # robot frame
                                       "map") # base frame
-		'''marker = Marker()
-		marker.header.stamp = rospy.Time.now()
-		marker.header.frame_id = "map"
+	def publish_marker(self):
+		points = []	
+		# generate your trajectory
+
+		for i in xrange(0,9):
+			self.vis_pub.publish(self.createPointMarker2(points, 1, [0.6, 0.6, 0, 1]))
+
+	def createPointMarker2(self, points, marker_id, rgba = None, pose=[0,0,0,0,0,0,1], frame_id = '/world'):
+		marker = Marker()
+		marker.header.frame_id = "/map"
 		marker.type = marker.POINTS
-		marker.action = marker.ADD
-		marker.pose.position.x = self.x
-		marker.pose.position.y = self.y
-		marker.pose.position.z = 0
-		marker.pose.orientation.x = 0
-		marker.pose.orientation.y = 0
-		marker.pose.orientation.z = 0
-		marker.pose.orientation.w = 1
-		marker.scale.x = 0.1
-		marker.scale.y = 0.1
-		marker.scale.z = 0.1
-		marker.color.r = 0.6
-		marker.color.g = 0.6
-		marker.color.b = 0.6
-		marker.color.a = 1
-		self.pubMarker.publish(marker)'''
+		marker.scale.x = 0.01
+		marker.scale.y = 0.01
+		marker.scale.z = 0.01
+		marker.id = marker_id
+
+		n = len(points)
+		sub = 1
+	
+		if rgba is not None:
+			marker.color.r, marker.color.g, marker.color.b, marker.color.a = tuple(rgba)
+
+		for i in xrange(0,n,sub):
+			p = Point()
+			p.x = points[i][0]
+			p.y = points[i][1]
+			p.z = points[i][2]
+			marker.points.append(p)
+
+
+		if rgba is None:
+			for i in xrange(0,n,sub):
+				p = ColorRGBA()
+				p.r = points[i][3]
+				p.g = points[i][4]
+				p.b = points[i][5]
+				p.a = points[i][6]
+				marker.colors.append(p)
+
+		# marker.pose = poselist2pose(pose)
+
+		return marker
 
 if __name__ == "__main__":
 	rospy.init_node("odometry", anonymous = False)

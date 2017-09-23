@@ -18,7 +18,6 @@ class Tracking:
 		self.leftMotor.setSpeed(self.left_pwm)
 		self.rightMotor.setSpeed(self.right_pwm)
 		self.subPosition=rospy.Subscriber("/serial_node/odometry",Float64MultiArray,self.cbPosition)
-
 		rospy.on_shutdown(self.custom_shutdown)
 		rospy.loginfo("[%s] Initialized!" %self.node_name)
 	def cbPosition(self,msg):
@@ -28,20 +27,17 @@ class Tracking:
 		theta = theta % (2* pi)
 		print x,y,theta
 
-		# stages: 1) straight line,
-		#         2) semi-circle
-		#         3) straight line again.
-
-		#if 1-x > self.linear_err:            ### straight line
-
-		#if pi - theta > self.angular_err:    ### trun right/left
-
+		if 1-x > self.linear_err:   #run straightly
+			self.leftMotor.run(1)
+			self.rightMotor.run(1)
+		else:
+			self.leftMotor.run(4)
+			self.rightMotor.run(4)
 
 	def custom_shutdown(self):
 		self.leftMotor.run(4)
 		self.rightMotor.run(4)
 		del self.motorhat
-
 if __name__ == '__main__':
 	rospy.init_node('track', anonymous = False)
 	Track = Tracking()
