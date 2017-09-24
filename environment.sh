@@ -17,7 +17,7 @@ echo "...done"
 echo "Activating development."
 source $DUCKIETOWN_ROOT/catkin_ws/devel/setup.bash
 
-source lab2/catkin_ws/devel/setup.bash
+source ~/lab2/catkin_ws/devel/setup.bash
 
 # TODO: check that the time is >= 2015
 
