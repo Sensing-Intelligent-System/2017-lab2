@@ -12,7 +12,6 @@ float x, y, theta, d_theta;
 float dis_per_tick = 2* PI* RADIUS / CPR;
 float dis_L, dis_R;  
 float pose[3];
-uint32_t now, dt;
 
 ros::NodeHandle nh;
 std_msgs::Float64MultiArray msg;
@@ -32,15 +31,12 @@ void setup() {
   //Serial.begin(57600);
   attachInterrupt(0, Encoder_L, RISING);  //2
   attachInterrupt(1, Encoder_R, RISING);  //3 
-  //now = millis();
   nh.initNode();
   nh.advertise(odom);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  //if(millis()-now >= 200)  // Update rate= 5 Hz
-  //{
   dis_L = dis_per_tick * (encoder_pre_L - encoder_pos_L);
   dis_R = dis_per_tick * (encoder_pre_R - encoder_pos_R);
   //////////////////////////////////////////////////////////////////
@@ -57,10 +53,9 @@ void loop() {
   pose[2] = theta;
   msg.data = pose;
   odom.publish(&msg);
-  //now = millis();
   encoder_pos_L = encoder_pre_L;
   encoder_pos_R = encoder_pre_R;
-  //}
+  
   nh.spinOnce();
   delay(200);   // Update at 5 Hz
 }

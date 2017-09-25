@@ -48,7 +48,9 @@ class wheelOdometry(object):
                                       "map") # base frame
 	def publish_marker(self):
 		points = []	
+                #####################################################
 		# generate your trajectory
+                #####################################################
 
 		for i in xrange(0,9):
 			self.vis_pub.publish(self.createPointMarker2(points, 1, [0.6, 0.6, 0, 1]))

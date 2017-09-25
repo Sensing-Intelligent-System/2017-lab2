@@ -8,8 +8,6 @@ class Tracking:
 		self.node_name = rospy.get_name()	
 		self.state = 1
 		self.trig = None
-		self.linear_err = 0.0
-		self.angular_err = radians(0.1)
 		self.motorhat = Adafruit_MotorHAT(addr= 0x60)
 		self.leftMotor 	= self.motorhat.getMotor(1)
 		self.rightMotor = self.motorhat.getMotor(2)
@@ -32,9 +30,6 @@ class Tracking:
 		#         2) semi-circle
 		#         3) straight line again.
 
-		#if 1-x > self.linear_err:            ### straight line
-
-		#if pi - theta > self.angular_err:    ### trun right/left
 
 
 	def custom_shutdown(self):
@@ -43,6 +38,6 @@ class Tracking:
 		del self.motorhat
 
 if __name__ == '__main__':
-	rospy.init_node('track', anonymous = False)
+	rospy.init_node('tracking', anonymous = False)
 	Track = Tracking()
 	rospy.spin()
